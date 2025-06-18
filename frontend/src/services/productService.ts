@@ -30,16 +30,40 @@ export const productService = {
     return response.data;
   },
 
-  async createProduct(productData: FormData) {
-    const response = await api.post('/products', productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  async createProduct(productData: {
+    name: string;
+    description: string;
+    price: string;
+    category: string;
+    stock: string;
+    image?: string;
+  }) {
+    const response = await api.post('/products', {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      category: productData.category,
+      stock: productData.stock,
+      image: productData.image || ''
     });
     return response.data;
   },
 
-  async updateProduct(id: string, productData: FormData) {
-    const response = await api.put(`/products/${id}`, productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  async updateProduct(id: string, productData: {
+    name: string;
+    description: string;
+    price: string;
+    category: string;
+    stock: string;
+    image?: string;
+  }) {
+    const response = await api.put(`/products/${id}`, {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      category: productData.category,
+      stock: productData.stock,
+      image: productData.image || ''
     });
     return response.data;
   },

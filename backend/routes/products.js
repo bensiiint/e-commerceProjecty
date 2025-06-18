@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
     const query = { isActive: true };
 
     // Search
-    if (search) {
+    if (search && search.trim()) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
@@ -31,15 +31,15 @@ router.get('/', async (req, res) => {
     }
 
     // Category filter
-    if (category) {
+    if (category && category.trim()) {
       query.category = { $regex: category, $options: 'i' };
     }
 
     // Price range filter
     if (minPrice || maxPrice) {
       query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
+      if (minPrice && !isNaN(Number(minPrice))) query.price.$gte = Number(minPrice);
+      if (maxPrice && !isNaN(Number(maxPrice))) query.price.$lte = Number(maxPrice);
     }
 
     // Build sort object
@@ -77,6 +77,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Products fetch error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -123,13 +124,16 @@ router.post('/', authenticate, authorize('admin'), [
       });
     }
 
+    const { name, description, price, category, stock, image } = req.body;
+
     const productData = {
-      name: req.body.name,
-      description: req.body.description,
-      price: Number(req.body.price),
-      category: req.body.category,
-      stock: Number(req.body.stock),
-      image: req.body.image || ''
+      name: name.trim(),
+      description: description.trim(),
+      price: Number(price),
+      category: category.trim(),
+      stock: Number(stock),
+      image: image || '',
+      isActive: true
     };
 
     const product = new Product(productData);
@@ -140,6 +144,7 @@ router.post('/', authenticate, authorize('admin'), [
       product
     });
   } catch (error) {
+    console.error('Product creation error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -161,13 +166,15 @@ router.put('/:id', authenticate, authorize('admin'), [
       });
     }
 
+    const { name, description, price, category, stock, image } = req.body;
     const updateData = {};
-    if (req.body.name) updateData.name = req.body.name;
-    if (req.body.description) updateData.description = req.body.description;
-    if (req.body.price) updateData.price = Number(req.body.price);
-    if (req.body.category) updateData.category = req.body.category;
-    if (req.body.stock !== undefined) updateData.stock = Number(req.body.stock);
-    if (req.body.image !== undefined) updateData.image = req.body.image;
+    
+    if (name) updateData.name = name.trim();
+    if (description) updateData.description = description.trim();
+    if (price !== undefined) updateData.price = Number(price);
+    if (category) updateData.category = category.trim();
+    if (stock !== undefined) updateData.stock = Number(stock);
+    if (image !== undefined) updateData.image = image;
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -184,6 +191,7 @@ router.put('/:id', authenticate, authorize('admin'), [
       product
     });
   } catch (error) {
+    console.error('Product update error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

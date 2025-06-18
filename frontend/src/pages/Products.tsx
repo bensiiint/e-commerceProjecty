@@ -10,19 +10,16 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [categories, setCategories] = useState<string[]>([]);
   
   const { addToCart } = useCart();
 
   useEffect(() => {
     loadProducts();
-    loadCategories();
-  }, [currentPage, searchTerm, selectedCategory, priceRange, sortBy]);
+  }, [currentPage, searchTerm, priceRange, sortBy]);
 
   const loadProducts = async () => {
     try {
@@ -31,7 +28,6 @@ export default function Products() {
         page: currentPage,
         limit: 12,
         search: searchTerm,
-        category: selectedCategory,
         minPrice: priceRange.min ? Number(priceRange.min) : undefined,
         maxPrice: priceRange.max ? Number(priceRange.max) : undefined,
         sortBy,
@@ -39,21 +35,12 @@ export default function Products() {
       
       const response = await productService.getProducts(params);
       setProducts(response.products);
-      setTotalPages(response.totalPages);
+      setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error('Failed to load products:', error);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const response = await productService.getCategories();
-      setCategories(response);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
     }
   };
 
@@ -77,7 +64,6 @@ export default function Products() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('');
     setPriceRange({ min: '', max: '' });
     setSortBy('');
     setCurrentPage(1);
@@ -113,20 +99,7 @@ export default function Products() {
               </div>
             </form>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex space-x-2">
                 <input
                   type="number"

@@ -37,40 +37,46 @@ export default function Navbar() {
             >
               Home
             </Link>
-            <Link 
-              to="/products" 
-              className="text-gray-700 hover:text-primary-500 font-medium transition-colors"
-            >
-              Products
-            </Link>
+            {user?.role !== 'admin' && (
+              <Link 
+                to="/products" 
+                className="text-gray-700 hover:text-primary-500 font-medium transition-colors"
+              >
+                Products
+              </Link>
+            )}
           </div>
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
-            {/* Search */}
-            <div className="hidden md:flex">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-64"
-                />
+            {/* Search - Only show for non-admin users */}
+            {user?.role !== 'admin' && (
+              <div className="hidden md:flex">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-64"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Cart */}
-            <Link 
-              to="/cart" 
-              className="relative p-2 text-gray-700 hover:text-primary-500 transition-colors"
-            >
-              <ShoppingCart className="w-6 h-6" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart - Only show for non-admin users */}
+            {user?.role !== 'admin' && (
+              <Link 
+                to="/cart" 
+                className="relative p-2 text-gray-700 hover:text-primary-500 transition-colors"
+              >
+                <ShoppingCart className="w-6 h-6" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* User Menu */}
             {user ? (
@@ -85,15 +91,7 @@ export default function Navbar() {
 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
-                    <Link
-                      to="/profile"
-                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Profile</span>
-                    </Link>
-                    {user.role === 'admin' && (
+                    {user.role === 'admin' ? (
                       <>
                         <Link
                           to="/admin"
@@ -112,6 +110,15 @@ export default function Navbar() {
                           <span>Manage Products</span>
                         </Link>
                       </>
+                    ) : (
+                      <Link
+                        to="/profile"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Profile</span>
+                      </Link>
                     )}
                     <button
                       onClick={handleLogout}
@@ -161,20 +168,24 @@ export default function Navbar() {
               >
                 Home
               </Link>
-              <Link 
-                to="/products" 
-                className="text-gray-700 hover:text-primary-500 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Products
-              </Link>
-              <div className="pt-2 border-t border-gray-200">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
+              {user?.role !== 'admin' && (
+                <Link 
+                  to="/products" 
+                  className="text-gray-700 hover:text-primary-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Products
+                </Link>
+              )}
+              {user?.role !== 'admin' && (
+                <div className="pt-2 border-t border-gray-200">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

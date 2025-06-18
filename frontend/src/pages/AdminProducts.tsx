@@ -7,8 +7,6 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,8 +23,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     loadProducts();
-    loadCategories();
-  }, [currentPage, searchTerm, selectedCategory]);
+  }, [currentPage, searchTerm]);
 
   const loadProducts = async () => {
     try {
@@ -35,7 +32,6 @@ export default function AdminProducts() {
         page: currentPage,
         limit: 10,
         search: searchTerm,
-        category: selectedCategory,
       };
       
       const response = await fetch('/api/admin/products?' + new URLSearchParams(
@@ -59,29 +55,15 @@ export default function AdminProducts() {
     }
   };
 
-  const loadCategories = async () => {
-    try {
-      const response = await productService.getCategories();
-      setCategories(response);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const formData = new FormData();
-      Object.entries(productForm).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
       if (editingProduct) {
-        await productService.updateProduct(editingProduct._id, formData);
+        await productService.updateProduct(editingProduct._id, productForm);
         toast.success('Product updated successfully');
       } else {
-        await productService.createProduct(formData);
+        await productService.createProduct(productForm);
         toast.success('Product created successfully');
       }
 
@@ -155,7 +137,7 @@ export default function AdminProducts() {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search */}
         <div className="card p-6 mb-6">
           <form onSubmit={handleSearch} className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
@@ -168,18 +150,6 @@ export default function AdminProducts() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input-field lg:w-48"
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
             <button type="submit" className="btn-primary whitespace-nowrap">
               Search
             </button>
