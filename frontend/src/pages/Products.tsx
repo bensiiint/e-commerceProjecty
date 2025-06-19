@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Grid, List, Star, ShoppingCart } from 'lucide-react';
+import { Search, Grid, List, Star, ShoppingCart } from 'lucide-react';
 import { productService, Product } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { toast } from '../components/Toast';
@@ -19,26 +19,46 @@ export default function Products() {
 
   useEffect(() => {
     loadProducts();
-  }, [currentPage, searchTerm, priceRange, sortBy]);
+  }, [currentPage]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const params = {
+      console.log('Loading products with params:', {
         page: currentPage,
         limit: 12,
         search: searchTerm,
         minPrice: priceRange.min ? Number(priceRange.min) : undefined,
         maxPrice: priceRange.max ? Number(priceRange.max) : undefined,
         sortBy,
+      });
+
+      const params: any = {
+        page: currentPage,
+        limit: 12,
       };
+
+      // Only add non-empty parameters
+      if (searchTerm && searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+      if (priceRange.min && !isNaN(Number(priceRange.min))) {
+        params.minPrice = Number(priceRange.min);
+      }
+      if (priceRange.max && !isNaN(Number(priceRange.max))) {
+        params.maxPrice = Number(priceRange.max);
+      }
+      if (sortBy && sortBy.trim()) {
+        params.sortBy = sortBy.trim();
+      }
       
       const response = await productService.getProducts(params);
-      setProducts(response.products);
-      setTotalPages(response.pagination.totalPages);
-    } catch (error) {
+      setProducts(response.products || []);
+      setTotalPages(response.pagination?.totalPages || 1);
+    } catch (error: any) {
       console.error('Failed to load products:', error);
       toast.error('Failed to load products');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -67,6 +87,8 @@ export default function Products() {
     setPriceRange({ min: '', max: '' });
     setSortBy('');
     setCurrentPage(1);
+    // Reload products after clearing filters
+    setTimeout(() => loadProducts(), 100);
   };
 
   return (

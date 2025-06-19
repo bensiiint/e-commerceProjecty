@@ -48,6 +48,33 @@ export default function Checkout() {
     }));
   };
 
+  const validateForm = () => {
+    const { name, address, city, postalCode, phone } = shippingInfo;
+    
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return false;
+    }
+    if (!address.trim()) {
+      toast.error('Address is required');
+      return false;
+    }
+    if (!city.trim()) {
+      toast.error('City is required');
+      return false;
+    }
+    if (!postalCode.trim()) {
+      toast.error('Postal code is required');
+      return false;
+    }
+    if (!phone.trim()) {
+      toast.error('Phone number is required');
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -62,6 +89,10 @@ export default function Checkout() {
       return;
     }
 
+    if (!validateForm()) {
+      return;
+    }
+
     if (walletBalance < finalTotal) {
       toast.error(`Insufficient wallet balance. Required: $${finalTotal.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`);
       return;
@@ -71,8 +102,16 @@ export default function Checkout() {
       setLoading(true);
       
       const orderData = {
-        shippingAddress: shippingInfo,
+        shippingAddress: {
+          name: shippingInfo.name.trim(),
+          address: shippingInfo.address.trim(),
+          city: shippingInfo.city.trim(),
+          postalCode: shippingInfo.postalCode.trim(),
+          phone: shippingInfo.phone.trim()
+        }
       };
+      
+      console.log('Submitting order:', orderData);
       
       await orderService.createOrder(orderData);
       
@@ -83,7 +122,9 @@ export default function Checkout() {
       navigate('/profile');
       
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to place order');
+      console.error('Order submission error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to place order';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -158,7 +199,7 @@ export default function Checkout() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
+                    Full Name *
                   </label>
                   <input
                     type="text"
@@ -167,12 +208,13 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your full name"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
+                    Address *
                   </label>
                   <input
                     type="text"
@@ -181,13 +223,14 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your address"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City
+                      City *
                     </label>
                     <input
                       type="text"
@@ -196,11 +239,12 @@ export default function Checkout() {
                       onChange={handleInputChange}
                       className="input-field"
                       required
+                      placeholder="Enter your city"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code
+                      Postal Code *
                     </label>
                     <input
                       type="text"
@@ -209,13 +253,14 @@ export default function Checkout() {
                       onChange={handleInputChange}
                       className="input-field"
                       required
+                      placeholder="Enter postal code"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
+                    Phone Number *
                   </label>
                   <input
                     type="tel"
@@ -224,6 +269,7 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your phone number"
                   />
                 </div>
               </form>
