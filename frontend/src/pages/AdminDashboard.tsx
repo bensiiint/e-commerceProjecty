@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Users, Package, ShoppingCart, DollarSign, TrendingUp, Eye, Wallet, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { walletService } from '../services/walletService';
 import { toast } from '../components/Toast';
@@ -276,10 +277,13 @@ export default function AdminDashboard() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
-              <button className="text-primary-600 hover:text-primary-700 flex items-center space-x-1">
+              <Link 
+                to="/admin/orders" 
+                className="text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+              >
                 <Eye className="w-4 h-4" />
                 <span>View All</span>
-              </button>
+              </Link>
             </div>
 
             <div className="space-y-4">
@@ -334,21 +338,21 @@ export default function AdminDashboard() {
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <button className="card p-6 text-left hover:shadow-md transition-shadow">
+            <Link to="/admin/products" className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <Package className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Add New Product</h3>
               <p className="text-gray-600 text-sm">Create a new product listing</p>
-            </button>
+            </Link>
 
-            <button className="card p-6 text-left hover:shadow-md transition-shadow">
+            <Link to="/admin/orders" className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <ShoppingCart className="w-6 h-6 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Manage Orders</h3>
               <p className="text-gray-600 text-sm">View and update order status</p>
-            </button>
+            </Link>
 
             <button className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">

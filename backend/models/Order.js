@@ -26,8 +26,8 @@ const orderSchema = new mongoose.Schema({
   },
   orderNumber: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
+    // REMOVE: required: true (this was causing the error)
   },
   items: [orderItemSchema],
   shippingAddress: {
@@ -55,7 +55,7 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['card', 'paypal', 'cash']
+    enum: ['card', 'paypal', 'cash', 'wallet'] // ADD: 'wallet' to this array
   },
   paymentStatus: {
     type: String,
