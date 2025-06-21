@@ -168,7 +168,7 @@ export default function ProductDetail() {
                 </div>
                 <span className="text-gray-500">(123 reviews)</span>
               </div>
-              <p className="text-3xl font-bold text-primary-600">${product.price}</p>
+              <p className="text-3xl font-bold text-primary-600">₱{product.price}</p>
             </div>
 
             <div>
@@ -253,7 +253,7 @@ export default function ProductDetail() {
                     {relatedProduct.name}
                   </h3>
                   <p className="text-lg font-bold text-primary-600">
-                    ${relatedProduct.price}
+                    ₱{relatedProduct.price}
                   </p>
                 </Link>
               ))}

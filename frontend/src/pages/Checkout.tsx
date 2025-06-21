@@ -94,7 +94,7 @@ export default function Checkout() {
     }
 
     if (walletBalance < finalTotal) {
-      toast.error(`Insufficient wallet balance. Required: $${finalTotal.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`);
+      toast.error(`Insufficient wallet balance. Required: ₱${finalTotal.toFixed(2)}, Available: ₱${walletBalance.toFixed(2)}`);
       return;
     }
 
@@ -170,14 +170,14 @@ export default function Checkout() {
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <span className="text-gray-600">Available Balance:</span>
                 <span className={`text-xl font-bold ${walletBalance >= finalTotal ? 'text-green-600' : 'text-red-600'}`}>
-                  ${walletBalance.toFixed(2)}
+                  ₱{walletBalance.toFixed(2)}
                 </span>
               </div>
               
               {walletBalance < finalTotal && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-red-800 text-sm">
-                    Insufficient balance. You need ${(finalTotal - walletBalance).toFixed(2)} more.
+                    Insufficient balance. You need ₱{(finalTotal - walletBalance).toFixed(2)} more.
                   </p>
                   <Link
                     to="/profile"
@@ -324,7 +324,7 @@ export default function Checkout() {
                       <p className="text-gray-500 text-sm">Qty: {item.quantity}</p>
                     </div>
                     <span className="font-medium text-gray-900">
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      ₱{(item.product.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -334,18 +334,18 @@ export default function Checkout() {
               <div className="space-y-4 border-t border-gray-200 pt-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${total.toFixed(2)}</span>
+                  <span className="font-medium">₱{total.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">${tax.toFixed(2)}</span>
+                  <span className="font-medium">₱{tax.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-medium">
-                    {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                    {shipping === 0 ? 'Free' : `₱${shipping.toFixed(2)}`}
                   </span>
                 </div>
                 
@@ -353,7 +353,7 @@ export default function Checkout() {
                   <div className="flex justify-between">
                     <span className="text-lg font-bold text-gray-900">Total</span>
                     <span className="text-lg font-bold text-gray-900">
-                      ${finalTotal.toFixed(2)}
+                      ₱{finalTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function Checkout() {
                 disabled={loading || walletBalance < finalTotal}
                 className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Processing...' : `Pay with Wallet - $${finalTotal.toFixed(2)}`}
+                {loading ? 'Processing...' : `Pay with Wallet - ₱${finalTotal.toFixed(2)}`}
               </button>
 
               <p className="text-xs text-gray-500 text-center mt-4">

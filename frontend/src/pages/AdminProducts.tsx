@@ -229,7 +229,7 @@ export default function AdminProducts() {
                         {product.category}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        ${product.price}
+                        ₱{product.price}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
@@ -352,7 +352,7 @@ export default function AdminProducts() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Price ($)
+                        Price (₱)
                       </label>
                       <input
                         type="number"

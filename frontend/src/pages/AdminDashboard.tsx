@@ -201,7 +201,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">₱{stats.totalRevenue.toFixed(2)}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-orange-600" />
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-500">{request.user.email}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">${request.amount}</p>
+                        <p className="text-lg font-bold text-gray-900">₱{request.amount}</p>
                         <p className="text-sm text-gray-500">{request.paymentMethod}</p>
                       </div>
                     </div>
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">${order.total.toFixed(2)}</p>
+                    <p className="font-bold text-gray-900">₱{order.total.toFixed(2)}</p>
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-gray-900">${sale.total.toFixed(2)}</p>
+                  <p className="font-bold text-gray-900">₱{sale.total.toFixed(2)}</p>
                   <p className="text-sm text-gray-500">{sale.count} orders</p>
                 </div>
               </div>

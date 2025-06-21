@@ -374,7 +374,7 @@ export default function Profile() {
 
                   <div className="text-center p-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg text-white">
                     <h3 className="text-lg font-medium mb-2">Available Balance</h3>
-                    <p className="text-4xl font-bold">${wallet.balance.toFixed(2)}</p>
+                    <p className="text-4xl font-bold">₱{wallet.balance.toFixed(2)}</p>
                   </div>
                 </div>
 
@@ -390,7 +390,7 @@ export default function Profile() {
                         <div key={request._id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium text-gray-900">${request.amount}</p>
+                              <p className="font-medium text-gray-900">₱{request.amount}</p>
                               <p className="text-sm text-gray-500">{request.paymentMethod}</p>
                               <p className="text-xs text-gray-400">
                                 {new Date(request.createdAt).toLocaleDateString()}
@@ -428,7 +428,7 @@ export default function Profile() {
                             </p>
                           </div>
                           <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.amount > 0 ? '+' : ''}${transaction.amount.toFixed(2)}
+                            {transaction.amount > 0 ? '+' : ''}₱{transaction.amount.toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -475,7 +475,7 @@ export default function Profile() {
                               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                             </span>
                             <p className="text-lg font-bold text-gray-900 mt-1">
-                              ${order.total.toFixed(2)}
+                              ₱{order.total.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -493,7 +493,7 @@ export default function Profile() {
                                 <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                               </div>
                               <span className="font-medium text-gray-900">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                ₱{(item.price * item.quantity).toFixed(2)}
                               </span>
                             </div>
                           ))}
@@ -580,7 +580,7 @@ export default function Profile() {
                 <form onSubmit={handleTopupSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Amount ($)
+                      Amount (₱)
                     </label>
                     <input
                       type="number"

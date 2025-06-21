@@ -286,7 +286,7 @@ export default function AdminOrders() {
                         {getTotalItems(order)} items
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        ${order.total.toFixed(2)}
+                        ₱{order.total.toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
@@ -407,7 +407,7 @@ export default function AdminOrders() {
                       </p>
                       <p><strong>Payment Method:</strong> {selectedOrder.paymentMethod}</p>
                       <p><strong>Payment Status:</strong> {selectedOrder.paymentStatus}</p>
-                      <p><strong>Total:</strong> ${selectedOrder.total.toFixed(2)}</p>
+                      <p><strong>Total:</strong> ₱{selectedOrder.total.toFixed(2)}</p>
                       <p><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
                       {selectedOrder.trackingNumber && (
                         <p><strong>Tracking:</strong> {selectedOrder.trackingNumber}</p>
@@ -440,7 +440,7 @@ export default function AdminOrders() {
                           <div className="flex-1">
                             <p className="font-medium text-sm">{item.product.name}</p>
                             <p className="text-xs text-gray-500">
-                              ${item.price} × {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
+                              ₱{item.price} × {item.quantity} = ₱{(item.price * item.quantity).toFixed(2)}
                             </p>
                           </div>
                         </div>

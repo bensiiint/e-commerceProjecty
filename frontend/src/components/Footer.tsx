@@ -16,19 +16,9 @@ export default function Footer() {
               <span className="text-xl font-bold">ShopHub</span>
             </Link>
             <p className="text-gray-400">
-              Your trusted e-commerce destination for quality products and exceptional service.
+              Magtiwala Maniwala 10k mo gagawin nateng 10k ko mabuhay pinas ahuuu.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
+           
           </div>
 
           {/* Quick Links */}
@@ -58,33 +48,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Customer Service */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Shipping Info
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Returns
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Track Order
-                </a>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
@@ -95,11 +58,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center space-x-2 text-gray-400">
                 <Phone className="w-4 h-4" />
-                <span>1-800-SHOP-HUB</span>
+                <span>+63 98765432123</span>
               </li>
               <li className="flex items-center space-x-2 text-gray-400">
                 <MapPin className="w-4 h-4" />
-                <span>123 Commerce St, City, State 12345</span>
+                <span>123 Maangas St, Nanununtok City</span>
               </li>
             </ul>
           </div>

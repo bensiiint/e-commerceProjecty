@@ -223,7 +223,7 @@ export default function Products() {
                       
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary-600">
-                          ${product.price}
+                          ₱{product.price}
                         </span>
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -267,7 +267,7 @@ export default function Products() {
                       </p>
                       <div className="flex items-center space-x-4">
                         <span className="text-2xl font-bold text-primary-600">
-                          ${product.price}
+                          ₱{product.price}
                         </span>
                         <div className="flex items-center space-x-1">
                           <Star className="w-5 h-5 text-yellow-400 fill-current" />

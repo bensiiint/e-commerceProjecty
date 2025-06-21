@@ -72,7 +72,7 @@ export default function Cart() {
                   </h3>
                   <p className="text-gray-600 text-sm">Product ID: {item.product._id}</p>
                   <p className="text-lg font-bold text-primary-600">
-                    ${item.product.price}
+                    ₱{item.product.price}
                   </p>
                 </div>
 
@@ -95,7 +95,7 @@ export default function Cart() {
 
                   <div className="flex items-center space-x-4">
                     <span className="text-lg font-bold">
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      ₱{(item.product.price * item.quantity).toFixed(2)}
                     </span>
                     <button
                       onClick={() => handleRemove(item.product._id)}
@@ -117,24 +117,24 @@ export default function Cart() {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal ({itemCount} items)</span>
-                  <span className="font-medium">${total.toFixed(2)}</span>
+                  <span className="font-medium">₱{total.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">${tax.toFixed(2)}</span>
+                  <span className="font-medium">₱{tax.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-medium">
-                    {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                    {shipping === 0 ? 'Free' : `₱${shipping.toFixed(2)}`}
                   </span>
                 </div>
                 
                 {shipping > 0 && (
                   <p className="text-sm text-gray-500">
-                    Free shipping on orders over $50
+                    Free shipping on orders over ₱50
                   </p>
                 )}
                 
@@ -142,7 +142,7 @@ export default function Cart() {
                   <div className="flex justify-between">
                     <span className="text-lg font-bold text-gray-900">Total</span>
                     <span className="text-lg font-bold text-gray-900">
-                      ${finalTotal.toFixed(2)}
+                      ₱{finalTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
