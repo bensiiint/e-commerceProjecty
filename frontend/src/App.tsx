@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/Toast';
+import AdminOrders from './pages/AdminOrders';
 
 function App() {
   return (
@@ -43,10 +44,16 @@ function App() {
               <AdminProducts />
             </ProtectedRoute>
           } />
+          <Route path="/admin/orders" element={
+  <ProtectedRoute adminOnly>
+    <AdminOrders />
+  </ProtectedRoute>
+} />
         </Routes>
       </main>
       <Footer />
       <Toaster />
+      
     </div>
   );
 }

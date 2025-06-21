@@ -2,34 +2,38 @@ import express from 'express';
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
+import User from '../models/User.js';
 import { authenticate } from '../middleware/auth.js';
-import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
 
-// Create order
-router.post('/', authenticate, [
-  body('shippingAddress.name').trim().isLength({ min: 1 }).withMessage('Name is required'),
-  body('shippingAddress.address').trim().isLength({ min: 1 }).withMessage('Address is required'),
-  body('shippingAddress.city').trim().isLength({ min: 1 }).withMessage('City is required'),
-  body('shippingAddress.postalCode').trim().isLength({ min: 1 }).withMessage('Postal code is required'),
-  body('shippingAddress.phone').trim().isLength({ min: 1 }).withMessage('Phone is required'),
-  body('paymentMethod').isIn(['card', 'paypal', 'cash']).withMessage('Invalid payment method')
-], async (req, res) => {
+// Create order using wallet
+router.post('/', authenticate, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    console.log('Order creation request:', req.body);
+    console.log('User:', req.user._id);
+
+    const { shippingAddress } = req.body;
+
+    // Validate shipping address
+    if (!shippingAddress) {
+      return res.status(400).json({ message: 'Shipping address is required' });
+    }
+
+    const { name, address, city, postalCode, phone } = shippingAddress;
+    
+    if (!name || !address || !city || !postalCode || !phone) {
       return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors.array()
+        message: 'All shipping address fields are required',
+        required: ['name', 'address', 'city', 'postalCode', 'phone']
       });
     }
 
-    const { shippingAddress, paymentMethod } = req.body;
-
     // Get user's cart
     const cart = await Cart.findOne({ user: req.user._id })
-      .populate('items.product', 'name price stock');
+      .populate('items.product', 'name price stock isActive');
+
+    console.log('Cart found:', cart);
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
@@ -48,7 +52,7 @@ router.post('/', authenticate, [
 
       if (item.product.stock < item.quantity) {
         return res.status(400).json({ 
-          message: `Insufficient stock for ${item.product.name}` 
+          message: `Insufficient stock for ${item.product.name}. Available: ${item.product.stock}, Requested: ${item.quantity}` 
         });
       }
 
@@ -62,25 +66,62 @@ router.post('/', authenticate, [
       });
     }
 
+    console.log('Order items:', orderItems);
+    console.log('Subtotal:', subtotal);
+
     // Calculate tax and shipping
     const tax = subtotal * 0.08; // 8% tax
     const shipping = subtotal > 50 ? 0 : 10; // Free shipping over $50
     const total = subtotal + tax + shipping;
 
+    console.log('Total calculation:', { subtotal, tax, shipping, total });
+
+    // Check wallet balance
+    const user = await User.findById(req.user._id);
+    console.log('User wallet balance:', user.wallet.balance);
+
+    if (user.wallet.balance < total) {
+      return res.status(400).json({ 
+        message: `Insufficient wallet balance. Required: $${total.toFixed(2)}, Available: $${user.wallet.balance.toFixed(2)}` 
+      });
+    }
+
     // Create order
     const order = new Order({
       user: req.user._id,
       items: orderItems,
-      shippingAddress,
-      paymentMethod,
+      shippingAddress: {
+        name: name.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        postalCode: postalCode.trim(),
+        phone: phone.trim()
+      },
+      paymentMethod: 'wallet',
       subtotal,
       tax,
       shipping,
       total,
-      paymentStatus: 'paid' // Simulate successful payment
+      paymentStatus: 'paid'
     });
 
+    console.log('Creating order:', order);
+
     await order.save();
+
+    console.log('Order created successfully:', order._id);
+
+    // Deduct from wallet and add transaction
+    user.wallet.balance -= total;
+    user.wallet.transactions.push({
+      type: 'purchase',
+      amount: -total,
+      description: `Order payment - #${order.orderNumber}`,
+      status: 'completed'
+    });
+    await user.save();
+
+    console.log('Wallet updated, new balance:', user.wallet.balance);
 
     // Update product stock
     for (const item of cart.items) {
@@ -88,11 +129,14 @@ router.post('/', authenticate, [
         item.product._id,
         { $inc: { stock: -item.quantity } }
       );
+      console.log(`Updated stock for product ${item.product._id}, reduced by ${item.quantity}`);
     }
 
     // Clear cart
     cart.items = [];
     await cart.save();
+
+    console.log('Cart cleared');
 
     // Populate order for response
     await order.populate('items.product', 'name price image');
@@ -102,7 +146,12 @@ router.post('/', authenticate, [
       order
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Order creation error:', error);
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -132,6 +181,7 @@ router.get('/', authenticate, async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Get orders error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -150,6 +200,7 @@ router.get('/:id', authenticate, async (req, res) => {
 
     res.json(order);
   } catch (error) {
+    console.error('Get single order error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

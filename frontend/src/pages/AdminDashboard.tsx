@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Package, ShoppingCart, DollarSign, TrendingUp, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Package, ShoppingCart, DollarSign, TrendingUp, Eye, Wallet, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { walletService } from '../services/walletService';
+import { toast } from '../components/Toast';
 
 interface DashboardStats {
   totalUsers: number;
@@ -29,6 +32,19 @@ interface MonthlySale {
   count: number;
 }
 
+interface TopupRequest {
+  _id: string;
+  user: {
+    name: string;
+    email: string;
+  };
+  amount: number;
+  paymentMethod: string;
+  paymentProof: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -38,10 +54,12 @@ export default function AdminDashboard() {
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [monthlySales, setMonthlySales] = useState<MonthlySale[]>([]);
+  const [topupRequests, setTopupRequests] = useState<TopupRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
+    loadTopupRequests();
   }, []);
 
   const loadDashboardData = async () => {
@@ -63,6 +81,25 @@ export default function AdminDashboard() {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTopupRequests = async () => {
+    try {
+      const requests = await walletService.getAllTopupRequests('pending');
+      setTopupRequests(requests);
+    } catch (error) {
+      console.error('Failed to load topup requests:', error);
+    }
+  };
+
+  const handleTopupRequest = async (id: string, status: 'approved' | 'rejected', adminNotes?: string) => {
+    try {
+      await walletService.processTopupRequest(id, status, adminNotes);
+      toast.success(`Top-up request ${status} successfully`);
+      loadTopupRequests();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || `Failed to ${status} request`);
     }
   };
 
@@ -177,15 +214,76 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Pending Top-up Requests */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Pending Top-up Requests</h2>
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm text-yellow-600">{topupRequests.length} pending</span>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {topupRequests.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No pending requests</p>
+              ) : (
+                topupRequests.map((request) => (
+                  <div key={request._id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{request.user.name}</h4>
+                        <p className="text-sm text-gray-500">{request.user.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">${request.amount}</p>
+                        <p className="text-sm text-gray-500">{request.paymentMethod}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-600">
+                        <strong>Payment Proof:</strong> {request.paymentProof}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(request.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleTopupRequest(request._id, 'approved')}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Approve</span>
+                      </button>
+                      <button
+                        onClick={() => handleTopupRequest(request._id, 'rejected', 'Request rejected by admin')}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Recent Orders */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
-              <button className="text-primary-600 hover:text-primary-700 flex items-center space-x-1">
+              <Link 
+                to="/admin/orders" 
+                className="text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+              >
                 <Eye className="w-4 h-4" />
                 <span>View All</span>
-              </button>
+              </Link>
             </div>
 
             <div className="space-y-4">
@@ -206,55 +304,55 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Monthly Sales Chart */}
-          <div className="card p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Monthly Sales</h2>
-            
-            <div className="space-y-4">
-              {monthlySales.map((sale, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
-                    <span className="font-medium text-gray-900">
-                      {formatMonth(sale._id.month)} {sale._id.year}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">${sale.total.toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">{sale.count} orders</p>
-                  </div>
+        {/* Monthly Sales Chart */}
+        <div className="card p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Monthly Sales</h2>
+          
+          <div className="space-y-4">
+            {monthlySales.map((sale, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
+                  <span className="font-medium text-gray-900">
+                    {formatMonth(sale._id.month)} {sale._id.year}
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            {monthlySales.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No sales data available</p>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">${sale.total.toFixed(2)}</p>
+                  <p className="text-sm text-gray-500">{sale.count} orders</p>
+                </div>
               </div>
-            )}
+            ))}
           </div>
+
+          {monthlySales.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No sales data available</p>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8">
+        <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <button className="card p-6 text-left hover:shadow-md transition-shadow">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Link to="/admin/products" className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <Package className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Add New Product</h3>
               <p className="text-gray-600 text-sm">Create a new product listing</p>
-            </button>
+            </Link>
 
-            <button className="card p-6 text-left hover:shadow-md transition-shadow">
+            <Link to="/admin/orders" className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <ShoppingCart className="w-6 h-6 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Manage Orders</h3>
               <p className="text-gray-600 text-sm">View and update order status</p>
-            </button>
+            </Link>
 
             <button className="card p-6 text-left hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -262,6 +360,14 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">User Management</h3>
               <p className="text-gray-600 text-sm">Manage user accounts and roles</p>
+            </button>
+
+            <button className="card p-6 text-left hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                <Wallet className="w-6 h-6 text-orange-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Wallet Management</h3>
+              <p className="text-gray-600 text-sm">Process top-up requests</p>
             </button>
           </div>
         </div>

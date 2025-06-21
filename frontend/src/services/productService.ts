@@ -16,41 +16,104 @@ export const productService = {
     page?: number;
     limit?: number;
     search?: string;
-    category?: string;
     minPrice?: number;
     maxPrice?: number;
     sortBy?: string;
   }) {
-    const response = await api.get('/products', { params });
-    return response.data;
+    try {
+      // Clean up params to avoid sending empty strings
+      const cleanParams: any = {};
+      
+      if (params?.page) cleanParams.page = params.page;
+      if (params?.limit) cleanParams.limit = params.limit;
+      if (params?.search && params.search.trim()) cleanParams.search = params.search.trim();
+      if (params?.minPrice !== undefined && params.minPrice !== null) cleanParams.minPrice = params.minPrice;
+      if (params?.maxPrice !== undefined && params.maxPrice !== null) cleanParams.maxPrice = params.maxPrice;
+      if (params?.sortBy && params.sortBy.trim()) cleanParams.sortBy = params.sortBy.trim();
+
+      console.log('Sending request with params:', cleanParams);
+      
+      const response = await api.get('/products', { params: cleanParams });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
   },
 
   async getProduct(id: string) {
-    const response = await api.get(`/products/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
   },
 
-  async createProduct(productData: FormData) {
-    const response = await api.post('/products', productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
+  async createProduct(productData: {
+    name: string;
+    description: string;
+    price: string;
+    category: string;
+    stock: string;
+    image?: string;
+  }) {
+    try {
+      const data = {
+        name: productData.name.trim(),
+        description: productData.description.trim(),
+        price: Number(productData.price),
+        category: productData.category.trim(),
+        stock: Number(productData.stock),
+        image: productData.image?.trim() || ''
+      };
+
+      console.log('Creating product with data:', data);
+      
+      const response = await api.post('/products', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
   },
 
-  async updateProduct(id: string, productData: FormData) {
-    const response = await api.put(`/products/${id}`, productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
+  async updateProduct(id: string, productData: {
+    name: string;
+    description: string;
+    price: string;
+    category: string;
+    stock: string;
+    image?: string;
+  }) {
+    try {
+      const data = {
+        name: productData.name.trim(),
+        description: productData.description.trim(),
+        price: Number(productData.price),
+        category: productData.category.trim(),
+        stock: Number(productData.stock),
+        image: productData.image?.trim() || ''
+      };
+
+      console.log('Updating product with data:', data);
+      
+      const response = await api.put(`/products/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
   },
 
   async deleteProduct(id: string) {
-    const response = await api.delete(`/products/${id}`);
-    return response.data;
-  },
-
-  async getCategories() {
-    const response = await api.get('/products/categories');
-    return response.data;
+    try {
+      const response = await api.delete(`/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
   }
 };

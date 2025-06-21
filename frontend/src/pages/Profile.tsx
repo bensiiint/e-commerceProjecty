@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Package, Settings, Lock, Edit2, Save, X } from 'lucide-react';
+import { User, Package, Settings, Lock, Edit2, Save, X, Wallet, Plus, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
+import { walletService } from '../services/walletService';
 import { toast } from '../components/Toast';
 
 interface Order {
@@ -22,12 +23,36 @@ interface Order {
   createdAt: string;
 }
 
+interface WalletData {
+  balance: number;
+  transactions: Array<{
+    type: string;
+    amount: number;
+    description: string;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
+interface TopupRequest {
+  _id: string;
+  amount: number;
+  paymentMethod: string;
+  paymentProof: string;
+  status: string;
+  adminNotes: string;
+  createdAt: string;
+}
+
 export default function Profile() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [wallet, setWallet] = useState<WalletData>({ balance: 0, transactions: [] });
+  const [topupRequests, setTopupRequests] = useState<TopupRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [showTopupModal, setShowTopupModal] = useState(false);
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -42,12 +67,20 @@ export default function Profile() {
     confirmPassword: ''
   });
 
+  const [topupData, setTopupData] = useState({
+    amount: '',
+    paymentMethod: 'bank_transfer',
+    paymentProof: ''
+  });
+
   useEffect(() => {
     if (activeTab === 'orders') {
       loadOrders();
-    }
-    if (activeTab === 'profile') {
+    } else if (activeTab === 'profile') {
       loadProfile();
+    } else if (activeTab === 'wallet') {
+      loadWallet();
+      loadTopupRequests();
     }
   }, [activeTab]);
 
@@ -75,6 +108,25 @@ export default function Profile() {
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadWallet = async () => {
+    try {
+      const walletData = await walletService.getWallet();
+      setWallet(walletData);
+    } catch (error) {
+      console.error('Failed to load wallet:', error);
+      toast.error('Failed to load wallet');
+    }
+  };
+
+  const loadTopupRequests = async () => {
+    try {
+      const requests = await walletService.getTopupRequests();
+      setTopupRequests(requests);
+    } catch (error) {
+      console.error('Failed to load topup requests:', error);
     }
   };
 
@@ -111,6 +163,27 @@ export default function Profile() {
     }
   };
 
+  const handleTopupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      await walletService.requestTopup(
+        Number(topupData.amount),
+        topupData.paymentMethod,
+        topupData.paymentProof
+      );
+      toast.success('Top-up request submitted successfully');
+      setShowTopupModal(false);
+      setTopupData({ amount: '', paymentMethod: 'bank_transfer', paymentProof: '' });
+      loadTopupRequests();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to submit top-up request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -118,6 +191,8 @@ export default function Profile() {
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -155,6 +230,18 @@ export default function Profile() {
                 >
                   <Settings className="w-5 h-5" />
                   <span>Profile Settings</span>
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('wallet')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    activeTab === 'wallet' 
+                      ? 'bg-primary-50 text-primary-700 border border-primary-200' 
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Wallet className="w-5 h-5" />
+                  <span>Wallet</span>
                 </button>
                 
                 <button
@@ -267,6 +354,87 @@ export default function Profile() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'wallet' && (
+              <div className="space-y-6">
+                {/* Wallet Balance */}
+                <div className="card p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900">Wallet Balance</h2>
+                    <button
+                      onClick={() => setShowTopupModal(true)}
+                      className="btn-primary flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Top Up</span>
+                    </button>
+                  </div>
+
+                  <div className="text-center p-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg text-white">
+                    <h3 className="text-lg font-medium mb-2">Available Balance</h3>
+                    <p className="text-4xl font-bold">${wallet.balance.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {/* Top-up Requests */}
+                <div className="card p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Top-up Requests</h3>
+                  
+                  {topupRequests.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No top-up requests yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {topupRequests.map((request) => (
+                        <div key={request._id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">${request.amount}</p>
+                              <p className="text-sm text-gray-500">{request.paymentMethod}</p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(request.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                              {request.status}
+                            </span>
+                          </div>
+                          {request.adminNotes && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                              <strong>Admin Notes:</strong> {request.adminNotes}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Transaction History */}
+                <div className="card p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Transaction History</h3>
+                  
+                  {wallet.transactions.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No transactions yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {wallet.transactions.map((transaction, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{transaction.description}</p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className={`font-bold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {transaction.amount > 0 ? '+' : ''}${transaction.amount.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -393,6 +561,97 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* Top-up Modal */}
+        {showTopupModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Top Up Wallet</h2>
+                  <button
+                    onClick={() => setShowTopupModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleTopupSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Amount ($)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      value={topupData.amount}
+                      onChange={(e) => setTopupData(prev => ({ ...prev, amount: e.target.value }))}
+                      className="input-field"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Method
+                    </label>
+                    <select
+                      value={topupData.paymentMethod}
+                      onChange={(e) => setTopupData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                      className="input-field"
+                    >
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="paypal">PayPal</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Proof (Receipt/Transaction ID)
+                    </label>
+                    <input
+                      type="text"
+                      value={topupData.paymentProof}
+                      onChange={(e) => setTopupData(prev => ({ ...prev, paymentProof: e.target.value }))}
+                      className="input-field"
+                      placeholder="Enter transaction ID or upload receipt"
+                      required
+                    />
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5 text-yellow-600" />
+                      <p className="text-sm text-yellow-800">
+                        Your top-up request will be reviewed by an admin. This may take 1-2 business days.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Submitting...' : 'Submit Request'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTopupModal(false)}
+                      className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

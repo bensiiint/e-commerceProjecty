@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Grid, List, Star, ShoppingCart } from 'lucide-react';
+import { Search, Grid, List, Star, ShoppingCart } from 'lucide-react';
 import { productService, Product } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { toast } from '../components/Toast';
@@ -10,50 +10,57 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [categories, setCategories] = useState<string[]>([]);
   
   const { addToCart } = useCart();
 
   useEffect(() => {
     loadProducts();
-    loadCategories();
-  }, [currentPage, searchTerm, selectedCategory, priceRange, sortBy]);
+  }, [currentPage]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const params = {
+      console.log('Loading products with params:', {
         page: currentPage,
         limit: 12,
         search: searchTerm,
-        category: selectedCategory,
         minPrice: priceRange.min ? Number(priceRange.min) : undefined,
         maxPrice: priceRange.max ? Number(priceRange.max) : undefined,
         sortBy,
+      });
+
+      const params: any = {
+        page: currentPage,
+        limit: 12,
       };
+
+      // Only add non-empty parameters
+      if (searchTerm && searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+      if (priceRange.min && !isNaN(Number(priceRange.min))) {
+        params.minPrice = Number(priceRange.min);
+      }
+      if (priceRange.max && !isNaN(Number(priceRange.max))) {
+        params.maxPrice = Number(priceRange.max);
+      }
+      if (sortBy && sortBy.trim()) {
+        params.sortBy = sortBy.trim();
+      }
       
       const response = await productService.getProducts(params);
-      setProducts(response.products);
-      setTotalPages(response.totalPages);
-    } catch (error) {
+      setProducts(response.products || []);
+      setTotalPages(response.pagination?.totalPages || 1);
+    } catch (error: any) {
       console.error('Failed to load products:', error);
       toast.error('Failed to load products');
+      setProducts([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const response = await productService.getCategories();
-      setCategories(response);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
     }
   };
 
@@ -77,10 +84,11 @@ export default function Products() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('');
     setPriceRange({ min: '', max: '' });
     setSortBy('');
     setCurrentPage(1);
+    // Reload products after clearing filters
+    setTimeout(() => loadProducts(), 100);
   };
 
   return (
@@ -113,20 +121,7 @@ export default function Products() {
               </div>
             </form>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex space-x-2">
                 <input
                   type="number"

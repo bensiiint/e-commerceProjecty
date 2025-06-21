@@ -9,7 +9,7 @@ export const seedAdmin = async () => {
       // Create admin user
       const adminUser = new User({
         name: 'Administrator',
-        email: 'admin@gmail.com',
+        email: 'admin',
         password: 'admin123',
         role: 'admin'
       });

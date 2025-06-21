@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react';
+import { ArrowLeft, Wallet, Truck, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { orderService } from '../services/orderService';
+import { walletService } from '../services/walletService';
 import { toast } from '../components/Toast';
 
 export default function Checkout() {
@@ -12,6 +13,7 @@ export default function Checkout() {
   const { user } = useAuth();
   
   const [loading, setLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [shippingInfo, setShippingInfo] = useState({
     name: user?.name || '',
     address: '',
@@ -19,18 +21,58 @@ export default function Checkout() {
     postalCode: '',
     phone: '',
   });
-  
-  const [paymentMethod, setPaymentMethod] = useState('card');
 
   const tax = total * 0.08;
   const shipping = total > 50 ? 0 : 10;
   const finalTotal = total + tax + shipping;
+
+  React.useEffect(() => {
+    if (user) {
+      loadWalletBalance();
+    }
+  }, [user]);
+
+  const loadWalletBalance = async () => {
+    try {
+      const wallet = await walletService.getWallet();
+      setWalletBalance(wallet.balance);
+    } catch (error) {
+      console.error('Failed to load wallet balance:', error);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingInfo(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const validateForm = () => {
+    const { name, address, city, postalCode, phone } = shippingInfo;
+    
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return false;
+    }
+    if (!address.trim()) {
+      toast.error('Address is required');
+      return false;
+    }
+    if (!city.trim()) {
+      toast.error('City is required');
+      return false;
+    }
+    if (!postalCode.trim()) {
+      toast.error('Postal code is required');
+      return false;
+    }
+    if (!phone.trim()) {
+      toast.error('Phone number is required');
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,15 +89,31 @@ export default function Checkout() {
       return;
     }
 
+    if (!validateForm()) {
+      return;
+    }
+
+    if (walletBalance < finalTotal) {
+      toast.error(`Insufficient wallet balance. Required: $${finalTotal.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`);
+      return;
+    }
+
     try {
       setLoading(true);
       
       const orderData = {
-        shippingAddress: shippingInfo,
-        paymentMethod,
+        shippingAddress: {
+          name: shippingInfo.name.trim(),
+          address: shippingInfo.address.trim(),
+          city: shippingInfo.city.trim(),
+          postalCode: shippingInfo.postalCode.trim(),
+          phone: shippingInfo.phone.trim()
+        }
       };
       
-      const order = await orderService.createOrder(orderData);
+      console.log('Submitting order:', orderData);
+      
+      await orderService.createOrder(orderData);
       
       // Clear cart after successful order
       clearCart();
@@ -64,7 +122,9 @@ export default function Checkout() {
       navigate('/profile');
       
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to place order');
+      console.error('Order submission error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to place order';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,6 +160,35 @@ export default function Checkout() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Checkout Form */}
           <div className="space-y-8">
+            {/* Wallet Balance */}
+            <div className="card p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Wallet className="w-6 h-6 text-primary-600" />
+                <h2 className="text-xl font-bold text-gray-900">Wallet Balance</h2>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">Available Balance:</span>
+                <span className={`text-xl font-bold ${walletBalance >= finalTotal ? 'text-green-600' : 'text-red-600'}`}>
+                  ${walletBalance.toFixed(2)}
+                </span>
+              </div>
+              
+              {walletBalance < finalTotal && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800 text-sm">
+                    Insufficient balance. You need ${(finalTotal - walletBalance).toFixed(2)} more.
+                  </p>
+                  <Link
+                    to="/profile"
+                    className="text-red-600 hover:text-red-700 font-medium text-sm mt-2 inline-block"
+                  >
+                    Top up your wallet →
+                  </Link>
+                </div>
+              )}
+            </div>
+
             {/* Shipping Information */}
             <div className="card p-6">
               <div className="flex items-center space-x-3 mb-6">
@@ -110,7 +199,7 @@ export default function Checkout() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
+                    Full Name *
                   </label>
                   <input
                     type="text"
@@ -119,12 +208,13 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your full name"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
+                    Address *
                   </label>
                   <input
                     type="text"
@@ -133,13 +223,14 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your address"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City
+                      City *
                     </label>
                     <input
                       type="text"
@@ -148,11 +239,12 @@ export default function Checkout() {
                       onChange={handleInputChange}
                       className="input-field"
                       required
+                      placeholder="Enter your city"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code
+                      Postal Code *
                     </label>
                     <input
                       type="text"
@@ -161,13 +253,14 @@ export default function Checkout() {
                       onChange={handleInputChange}
                       className="input-field"
                       required
+                      placeholder="Enter postal code"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
+                    Phone Number *
                   </label>
                   <input
                     type="tel"
@@ -176,6 +269,7 @@ export default function Checkout() {
                     onChange={handleInputChange}
                     className="input-field"
                     required
+                    placeholder="Enter your phone number"
                   />
                 </div>
               </form>
@@ -184,49 +278,25 @@ export default function Checkout() {
             {/* Payment Method */}
             <div className="card p-6">
               <div className="flex items-center space-x-3 mb-6">
-                <CreditCard className="w-6 h-6 text-primary-600" />
+                <Wallet className="w-6 h-6 text-primary-600" />
                 <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg">
-                  <input
-                    type="radio"
-                    id="card"
-                    name="payment"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="text-primary-600 focus:ring-primary-500"
-                  />
-                  <label htmlFor="card" className="flex-1 flex items-center space-x-3">
-                    <CreditCard className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">Credit/Debit Card</span>
-                  </label>
+              <div className="p-4 border border-primary-200 bg-primary-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Wallet className="w-5 h-5 text-primary-600" />
+                  <span className="font-medium text-primary-800">Wallet Payment</span>
                 </div>
-
-                <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg">
-                  <input
-                    type="radio"
-                    id="paypal"
-                    name="payment"
-                    value="paypal"
-                    checked={paymentMethod === 'paypal'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="text-primary-600 focus:ring-primary-500"
-                  />
-                  <label htmlFor="paypal" className="flex-1 flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-blue-600 rounded"></div>
-                    <span className="font-medium">PayPal</span>
-                  </label>
-                </div>
+                <p className="text-sm text-primary-600 mt-1">
+                  Payment will be deducted from your wallet balance
+                </p>
               </div>
 
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <Shield className="w-5 h-5 text-green-600" />
                   <p className="text-sm text-green-800">
-                    Your payment information is secure and encrypted
+                    Your payment is secure and processed instantly
                   </p>
                 </div>
               </div>
@@ -291,10 +361,10 @@ export default function Checkout() {
 
               <button
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={loading || walletBalance < finalTotal}
                 className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Processing...' : `Place Order - $${finalTotal.toFixed(2)}`}
+                {loading ? 'Processing...' : `Pay with Wallet - $${finalTotal.toFixed(2)}`}
               </button>
 
               <p className="text-xs text-gray-500 text-center mt-4">

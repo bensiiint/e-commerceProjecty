@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['user', 'admin'],
-    
     default: 'user'
   },
   address: {
@@ -38,6 +37,37 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: ''
+  },
+  wallet: {
+    balance: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    transactions: [{
+      type: {
+        type: String,
+        enum: ['topup', 'purchase', 'refund'],
+        required: true
+      },
+      amount: {
+        type: Number,
+        required: true
+      },
+      description: {
+        type: String,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'completed'
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }
 }, {
   timestamps: true
